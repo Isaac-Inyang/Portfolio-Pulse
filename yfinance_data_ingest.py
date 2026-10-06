@@ -23,7 +23,6 @@ TICKERS = [
 
 CREATE_TABLE_SQL = """
 CREATE SCHEMA IF NOT EXISTS raw;
-DROP TABLE IF EXISTS raw.yfinance_prices;
 CREATE TABLE IF NOT EXISTS raw.yfinance_prices (
     ticker      VARCHAR(10) NOT NULL,
     price_date  DATE NOT NULL,
