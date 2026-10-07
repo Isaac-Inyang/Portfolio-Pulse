@@ -1,0 +1,13 @@
+portfolio_pulse_dbt:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: ep-delicate-lake-zacabps4-pooler.c-2.eu-west-2.aws.neon.tech
+      schema: analytics
+      user: neondb_owner
+      password: npg_gsePi0Zf1HrK
+      port: 5432
+      dbname: neondb
+      sslmode: require
+      threads: 4
