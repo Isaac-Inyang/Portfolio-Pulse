@@ -7,3 +7,5 @@ SELECT
     TRIM(base_code)::VARCHAR AS base_currency,
     conversion_rate::NUMERIC(20,2) AS conversion_rate_ngn
 FROM {{ source('raw', 'raw_exchange_rate_ingestion') }}
+ORDER BY updated_at DESC
+LIMIT 1
