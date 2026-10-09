@@ -10,45 +10,21 @@ env:
   AIRBYTE_TOKEN: ${{ secrets.AIRBYTE_TOKEN }}
 
 jobs:
-  refresh-orders:
-    runs-on: ubuntu-latest
-    env:
-      DSN: ${{ secrets.NEON_DSN}}
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Installing dependencies
-        run: |
-          pip install  psycopg2-binary yfinance
-
-      - name: Ingesting yfinance data into Neon
-        run:
-          python yfinance_data_ingest.py --dsn "${DSN}"
-
   trigger-airbyte-sync:
     runs-on: ubuntu-latest
-    needs: refresh-orders
     steps:
     - name: Trigger Exchange Rate Airbyte Connection
       env:
         AIRBYTE_CONNECTION_ID: ${{ secrets.AIRBYTE_EXCHANGE_RATE_CONNECTION_ID }}
-      run:
-        |
-          curl -X POST "https://api.airbyte.com/v1/jobs" \
-             -H "Authorization: Bearer ${AIRBYTE_TOKEN}" \
-             -H "content-Type: application/json" \
-             -H "accept: application/json" \
-             -d '{
-               "jobType": "sync",
-               "connectionId": "'"${AIRBYTE_EXCHANGE_RATE_CONNECTION_ID}"'"
-             }'
+      run: |
+        curl -X POST "https://api.airbyte.com/v1/jobs" \
+            -H "Authorization: Bearer ${AIRBYTE_TOKEN}" \
+            -H "content-Type: application/json" \
+            -H "accept: application/json" \
+            -d '{
+              "jobType": "sync",
+              "connectionId": "'"${AIRBYTE_EXCHANGE_RATE_CONNECTION_ID}"'"
+            }'
             
     # - name: Trigger Stock Transaction Airbyte Connection
     #   env:
@@ -64,18 +40,34 @@ jobs:
     #            "connectionId": "'"${AIRBYTE_STOCK_TRANSACTION_CONNECTION_ID}"'"
     #          }'
 
-        
-  set-up-dbt:
+  refresh-orders:
     runs-on: ubuntu-latest
     needs: trigger-airbyte-sync
     defaults:
       run:
         working-directory: ./portfolio_pulse_dbt  # specifying the working directory
+
+    env:
+      DSN: ${{ secrets.NEON_DSN}}
+
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
       - name: Install dbt and dependencies
         run: |
-          pip install dbt-core dbt-postgres
+          pip install dbt-core dbt-postgres psycopg2-binary yfinance
           dbt deps
+
+      - name: Ingesting yfinance data into Neon
+        run:
+          python yfinance_data_ingest.py --dsn "${DSN}"
+
       - name: create profiles.yml dynamically
         env:
           DB_HOST: ${{ secrets.NEON_HOST }}
