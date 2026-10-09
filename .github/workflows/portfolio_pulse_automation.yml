@@ -19,8 +19,8 @@ jobs:
       run: |
         curl -X POST "https://api.airbyte.com/v1/jobs" \
             -H "Authorization: Bearer ${AIRBYTE_TOKEN}" \
-            -H "content-Type: application/json" \
-            -H "accept: application/json" \
+            -H "Content-Type: application/json" \
+            -H "Accept: application/json" \
             -d '{
               "jobType": "sync",
               "connectionId": "'"${AIRBYTE_EXCHANGE_RATE_CONNECTION_ID}"'"
