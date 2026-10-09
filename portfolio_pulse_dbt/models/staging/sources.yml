@@ -5,4 +5,4 @@ sources:
     tables:
       - name: raw_exchange_rate_ingestion
       - name: raw_stock_transactions
-      - name: yfinance_prices
+      - name: raw_yfinance_prices

@@ -8,6 +8,8 @@ WITH stock_prices AS (
         ticker,
         price_date,
         price_usd,
+        
+        -- giving ranks to filter for latest prices
         ROW_NUMBER() OVER(PARTITION BY ticker ORDER BY price_date DESC) AS row_num
     FROM {{ ref('stg_yfinance_prices') }}
 ),
@@ -40,10 +42,13 @@ SELECT
         ), 2
     ) AS profit_loss_usd,
 
-    --calculating ROI in percentage
+    --calculating Unrealised ROI in percentage
     ROUND(
-        (((latest_price_usd - average_buy_cost) / average_buy_cost) * 100), 2
-    ) AS ROI_usd
+        100.0 * (latest_value_usd - ( average_buy_cost * active_shares))
+        / NULLIF((average_buy_cost * active_shares), 0),
+        2
+    ) AS unrealized_roi_pct
 
 FROM latest_prices
+
 

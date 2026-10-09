@@ -1,0 +1,105 @@
+name: portfolio pulse automation
+
+
+on:
+  schedule:
+    - cron: '0 19 * * *' # Runs every 19 hour at night
+  workflow_dispatch:
+
+env:
+  AIRBYTE_TOKEN: ${{ secrets.AIRBYTE_TOKEN }}
+
+jobs:
+  refresh-orders:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./portfolio_pulse_dbt  # specifying the working directory
+
+    env:
+      DSN: ${{ secrets.DSN}}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dbt and dependencies
+        run: |
+          pip install dbt-core dbt-postgres psycopg2-binary yfinance
+          dbt deps
+
+      - name: Ingesting yfinance data into Neon
+        run:
+          python yfinance_data_ingest.py --dsn "${DSN}"
+
+  trigger-airbyte-sync:
+    runs-on: ubuntu-latest
+    needs: refresh-orders
+    steps:
+    - name: Trigger Exchange Rate Airbyte Connection
+      env:
+        AIRBYTE_CONNECTION_ID: ${{ secrets.AIRBYTE_EXCHANGE_RATE_CONNECTION_ID }}
+      run:
+        |
+          curl -X POST "https://api.airbyte.com/v1/jobs" \
+             -H "Authorization: Bearer ${AIRBYTE_TOKEN}" \
+             -H "content-Type: application/json" \
+             -H "accept: application/json" \
+             -d '{
+               "jobType": "sync",
+               "connectionId": "'"${AIRBYTE_EXCHANGE_RATE_CONNECTION_ID}"'"
+             }'
+            
+    - name: Trigger Stock Transaction Airbyte Connection
+      env:
+        AIRBYTE_CONNECTION_ID: ${{ secrets.AIRBYTE_STOCK_TRANSACTION_CONNECTION_ID }}
+      run:
+        |
+          curl -X POST "https://api.airbyte.com/v1/jobs" \
+             -H "Authorization: Bearer ${AIRBYTE_TOKEN}" \
+             -H "content-Type: application/json" \
+             -H "accept: application/json" \
+             -d '{
+               "jobType": "sync",
+               "connectionId": "'"${AIRBYTE_STOCK_TRANSACTION_CONNECTION_ID}"'"
+             }'
+
+        
+  set-up-dbt:
+    runs-on: ubuntu-latest
+    needs: trigger-airbyte-sync
+    steps:
+      - name: create profiles.yml dynamically
+        env:
+          DB_HOST: ${{ secrets.NEON_HOST }}
+          DB_USER: ${{ secrets.NEON_USER }}
+          DB_PASSWORD: ${{ secrets.NEON_PASSWORD }}
+          DB_NAME: ${{ secrets.NEON_DB }}
+
+        run: |
+          mkdir -p ~/.dbt
+          cat <<EOF > ~/.dbt/profiles.yml
+          naijashop_dbt:
+            target: dev
+            outputs:
+              dev:
+                type: postgres
+                host: $DB_HOST
+                user: $DB_USER
+                pass: $DB_PASSWORD
+                port: 5432
+                dbname: $DB_NAME
+                schema: marts
+                sslmode: require
+                threads: 4
+          EOF
+
+      - name: Run/debug and test dbt models
+        run: |
+          dbt debug  # test connections
+          dbt build  # runs after connection is established

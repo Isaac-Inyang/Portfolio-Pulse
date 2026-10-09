@@ -1,0 +1,52 @@
+version: 2
+
+models:
+  - name: mart_daily_portfolio
+    columns: 
+      - name: market_date
+        tests:
+          - not_null
+    
+      - name: todays_value
+        tests:
+          - not_null
+
+      - name: yesterdays_value
+        tests:
+          - not_null
+
+
+  - name: mart_portfolio_value_over_time
+    columns:
+      - name: price_date
+        tests:
+          - not_null
+
+      - name: portfolio_value_usd
+        tests:
+          - not_null
+
+  - name: mart_current_portfolio_value
+    columns:
+      - name: portfolio_value_usd
+        tests:
+          - not_null
+        
+      - name: portfolio_value_ngn
+        tests:
+          - not_null
+
+  - name: mart_profit_loss
+    columns:
+      - name: ticker
+        tests:
+          - unique
+          - not_null
+
+      - name: active_shares
+        tests:
+          - not_null
+
+      - name: profit_loss_usd
+        tests:
+          - not_null

@@ -23,11 +23,10 @@ TICKERS = [
 
 CREATE_TABLE_SQL = """
 CREATE SCHEMA IF NOT EXISTS raw;
-CREATE TABLE IF NOT EXISTS raw.yfinance_prices (
+CREATE TABLE IF NOT EXISTS raw.raw_yfinance_prices (
     ticker      VARCHAR(10) NOT NULL,
     price_date  DATE NOT NULL,
     price_usd   NUMERIC(18, 4) NOT NULL,
-    sector      VARCHAR(100),
     
 
     PRIMARY KEY (ticker, price_date)
@@ -35,41 +34,55 @@ CREATE TABLE IF NOT EXISTS raw.yfinance_prices (
 """
 
 UPSERT_SQL = """
-    INSERT INTO raw.yfinance_prices (
+    INSERT INTO raw.raw_yfinance_prices (
         ticker,
         price_date,
-        price_usd,
-        sector
+        price_usd
         
     )
-    VALUES (%(ticker)s, %(price_date)s, %(price_usd)s, %(sector)s)
+    VALUES %s
     ON CONFLICT (ticker, price_date)
     DO UPDATE SET
-        price_usd = EXCLUDED.price_usd,
-        sector = EXCLUDED.sector;
+        price_usd = EXCLUDED.price_usd
+    ;
 """
 
 # GET LATEST STOCK PRICES
 
-def get_yfinance_data(TICKERS):
+def get_yfinance_data(TICKERS, mode: str):
     """
-    Fetches the latest closing price and sector info 
+    Fetches either historical data at first run or the latest closing price and sector info 
     for all configured tickers.
+    
+    historical: From START_DATE through the latest available trading date.
+    daily: Recent 5-calendar-day window.
+
     """
+    print(f"\nFetching {mode} stock prices from yfinance...")
 
-
-    print("\nFetching latest stock prices from yfinance...")
-
-    # Pulling a 5-day window guarantees we catch the last active trading session
-    data = yf.download(
-        tickers=TICKERS,
-        period="5d",
-        interval="1d",
-        auto_adjust=False,
-        group_by="ticker",
-        progress=False,
-        threads=True
-    )
+    if mode == "historical":
+        START_DATE = "2021-01-11"
+        data = yf.download(
+            tickers=TICKERS,
+            start=START_DATE,
+            interval="1d",
+            auto_adjust=False,
+            group_by="ticker",
+            progress=False,
+            threads=True,
+        )
+    
+    else:
+        # Pulling a 5-day window guarantees we catch the last active trading session
+        data = yf.download(
+            tickers=TICKERS,
+            period="5d",
+            interval="1d",
+            auto_adjust=False,
+            group_by="ticker",
+            progress=False,
+            threads=True
+        )
 
     if data.empty:
         raise ValueError("No stock price data was returned by yfinance.")
@@ -78,39 +91,55 @@ def get_yfinance_data(TICKERS):
 
     for ticker in TICKERS:
         try:
-            # 1. Isolate the specific ticker's table segment
             ticker_df = data[ticker]
-            
-            # 2. Extract the absolute last row available
-            # latest_row = ticker_df.iloc[-1]
-            latest_row = ticker_df.dropna(subset=["Close"]).iloc[-1]
-            closing_price = latest_row['Close']
-            
-            # 3. Pull the date directly from the DataFrame index name
-            # .name extracts the timestamp value; strftime converts it to 'YYYY-MM-DD'
-            trading_date = latest_row.name.strftime('%Y-%m-%d')
-            
-            # 4. Fetch the company profile sector
-            stock_profile = yf.Ticker(ticker)
-            sector = stock_profile.info.get('sector', 'Unknown Sector')
-            
-            # 5. Append as an object perfectly modeled for database columns
-            stock_data.append({
-                "ticker": ticker,
-                "price_date": trading_date,
-                "price_usd": round(float(closing_price), 2),
-                "sector": sector
-            })
-        except Exception as e:
-            print(f"Error parsing data for {ticker}: {e}")
+
+            if mode== "historical":
+
+                # Ignore dates where no closing price is available.
+                ticker_df = ticker_df.dropna(subset=["Close"])
+
+                for trading_date, row in ticker_df.iterrows():
+                    closing_price = float(row["Close"])
+
+                    # stock_data.append({
+                    #     "ticker": ticker,
+                    #     "price_date": trading_date.date(),
+                    #     "price_usd": round(closing_price, 4)
+                    # })
+                    stock_data.append((
+                        ticker,
+                        trading_date.date().strftime('%Y-%m-%d'),
+                        round(closing_price, 4)
+                    ))
+
+            else:
+                # Ignore dates where no closing price is available.
+                clean_df = ticker_df.dropna(subset=["Close"])
+                if clean_df.empty:
+                    print(f"No valid data records returned for {ticker}. Skipping.")
+                    continue
+
+                # Extract the absolute latest single row available
+                latest_row = clean_df.iloc[-1]
+                closing_price = float(latest_row["Close"])
+
+                trading_date = latest_row.name.strftime('%Y-%m-%d')
+
+                stock_data.append((
+                    ticker,
+                    trading_date,
+                    round(closing_price, 4)
+                ))
+
+            print(
+                f"{ticker}: collected {len(ticker_df)} daily price records."
+            )
+
+        except Exception as exc:
+            print(f"Error processing {ticker}: {exc}")
+
 
     return stock_data
-
-# --- TEST EXECUTION ---
-# MY_TICKERS = ['AAPL', 'MSFT']
-# db_payload = get_yfinance_data(MY_TICKERS)
-# print(db_payload)
-
 
 
 def load_to_postgres(dsn: str, stock_data: list):
@@ -118,28 +147,38 @@ def load_to_postgres(dsn: str, stock_data: list):
     conn = psycopg2.connect(dsn)
     cursor = conn.cursor()
     cursor.execute(CREATE_TABLE_SQL)
+
+    from psycopg2.extras import execute_values
     
     # Batch insert ALL stock data at once 
     # Pass the list of dicts directly to executemany
-    cursor.executemany(UPSERT_SQL, stock_data)
+    execute_values(cursor, UPSERT_SQL, stock_data)
+    # cursor.executemany(UPSERT_SQL, stock_data)
     conn.commit()
     cursor.close()
     conn.close()
 
 
+
 def main():
-    parser = argparse.ArgumentParser(description="Fetch latest stock prices and load into Postgres.")
+    parser = argparse.ArgumentParser(description="Fetching historical or recent stock prices and load into Postgres.")
     parser.add_argument(
         "--dsn",
         required=True,
         help="Postgres DSN connection string"
+    )
+
+    parser.add_argument(
+        "--mode",
+        choices=["historical", "daily"],
+        default= "daily"
     )
     args = parser.parse_args()
 
     print("Starting yfinance data ingestion...")
 
     try:
-        data = get_yfinance_data(TICKERS)
+        data = get_yfinance_data(TICKERS, args.mode)
         print(f"Successfully fetched {len(data)} records from yfinance.")
     except Exception as e:
         print(f"ERROR: could not fetch yfinance data: {e}", file=sys.stderr)
