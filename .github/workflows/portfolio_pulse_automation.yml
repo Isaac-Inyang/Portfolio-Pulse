@@ -55,19 +55,19 @@ jobs:
                "connectionId": "'"${AIRBYTE_EXCHANGE_RATE_CONNECTION_ID}"'"
              }'
             
-    - name: Trigger Stock Transaction Airbyte Connection
-      env:
-        AIRBYTE_CONNECTION_ID: ${{ secrets.AIRBYTE_STOCK_TRANSACTION_CONNECTION_ID }}
-      run:
-        |
-          curl -X POST "https://api.airbyte.com/v1/jobs" \
-             -H "Authorization: Bearer ${AIRBYTE_TOKEN}" \
-             -H "content-Type: application/json" \
-             -H "accept: application/json" \
-             -d '{
-               "jobType": "sync",
-               "connectionId": "'"${AIRBYTE_STOCK_TRANSACTION_CONNECTION_ID}"'"
-             }'
+    # - name: Trigger Stock Transaction Airbyte Connection
+    #   env:
+    #     AIRBYTE_CONNECTION_ID: ${{ secrets.AIRBYTE_STOCK_TRANSACTION_CONNECTION_ID }}
+    #   run:
+    #     |
+    #       curl -X POST "https://api.airbyte.com/v1/jobs" \
+    #          -H "Authorization: Bearer ${AIRBYTE_TOKEN}" \
+    #          -H "content-Type: application/json" \
+    #          -H "accept: application/json" \
+    #          -d '{
+    #            "jobType": "sync",
+    #            "connectionId": "'"${AIRBYTE_STOCK_TRANSACTION_CONNECTION_ID}"'"
+    #          }'
 
         
   set-up-dbt:
