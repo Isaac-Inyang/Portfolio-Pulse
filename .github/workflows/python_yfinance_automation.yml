@@ -13,7 +13,8 @@ on:
           - daily
 
   schedule:
-    - cron: "0 20 * * 1-5"
+    # - cron: "0 20 * * 1-5"
+    - cron: "0 00 * * 1-6"
 
 jobs:
   yfinance_ingestion:
