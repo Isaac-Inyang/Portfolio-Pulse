@@ -37,5 +37,5 @@ jobs:
      - name: Ingesting yfinance data into Neon
        run:
          MODE="${{ inputs.mode || 'daily' }}"
-         python yfinance_data_ingest.py --dsn "${DSN}" --mode "$MODE"
+         python yfinance_data_ingest.py --dsn "${DSN}" --mode "${MODE}"
 
