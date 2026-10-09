@@ -12,12 +12,8 @@ env:
 jobs:
   refresh-orders:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./portfolio_pulse_dbt  # specifying the working directory
-
     env:
-      DSN: ${{ secrets.DSN}}
+      DSN: ${{ secrets.NEON_DSN}}
 
     steps:
       - name: Checkout repository
@@ -28,10 +24,9 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install dbt and dependencies
+      - name: Installing dependencies
         run: |
-          pip install dbt-core dbt-postgres psycopg2-binary yfinance
-          dbt deps
+          pip install  psycopg2-binary yfinance
 
       - name: Ingesting yfinance data into Neon
         run:
@@ -73,7 +68,14 @@ jobs:
   set-up-dbt:
     runs-on: ubuntu-latest
     needs: trigger-airbyte-sync
+    defaults:
+      run:
+        working-directory: ./portfolio_pulse_dbt  # specifying the working directory
     steps:
+      - name: Install dbt and dependencies
+        run: |
+          pip install dbt-core dbt-postgres
+          dbt deps
       - name: create profiles.yml dynamically
         env:
           DB_HOST: ${{ secrets.NEON_HOST }}
