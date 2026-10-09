@@ -1,10 +1,22 @@
 name: yfinance ingestion automation
 
 on:
-    workflow_dispatch:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Choose the ingestion mode"
+        required: true
+        default: "daily"
+        type: choice
+        options:
+          - historical
+          - daily
+
+  schedule:
+    - cron: "0 20 * * 1-5"
 
 jobs:
-  refresh-orders:
+  yfinance_ingestion:
     runs-on: ubuntu-latest
     env:
        DSN: ${{ secrets.NEON_DSN}}
@@ -24,5 +36,6 @@ jobs:
 
      - name: Ingesting yfinance data into Neon
        run:
-         python yfinance_data_ingest.py --dsn "${DSN}"
+         MODE="${{ inputs.mode || 'daily' }}"
+         python yfinance_data_ingest.py --dsn "${DSN}" --mode "$MODE"
 
