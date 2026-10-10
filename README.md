@@ -36,7 +36,7 @@ flowchart LR
     K -. Orchestration .-> dbt
 
     %% The Integrated dbt Project Container
-    subgraph dbt [dbt Project Layers]
+    subgraph dbt [dbt Layers]
         direction LR
         F --> G[Staging]
         G --> H[Intermediate Models]
