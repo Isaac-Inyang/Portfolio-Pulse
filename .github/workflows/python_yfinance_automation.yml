@@ -1,4 +1,4 @@
-name: yfinance ingestion automation
+name: yfinance ingestion and DBT automation
 
 on:
   workflow_dispatch:
@@ -46,6 +46,13 @@ jobs:
       run:
         working-directory: ./portfolio_pulse_dbt  # specifying the working directory
     steps:
+     - name: Checkout repository
+       uses: actions/checkout@v4
+
+     - name: Set up Python
+       uses: actions/setup-python@v5
+       with:
+          python-version: '3.11'
      - name: Install dbt and dependencies
        run: |
          pip install dbt-core dbt-postgres
