@@ -58,29 +58,28 @@ jobs:
          pip install dbt-core dbt-postgres
          dbt deps
 
-     - name: create profiles.yml dynamically
+     - name: Create profiles.yml dynamically
        env:
          DB_HOST: ${{ secrets.NEON_HOST }}
          DB_USER: ${{ secrets.NEON_USER }}
          DB_PASSWORD: ${{ secrets.NEON_PASSWORD }}
          DB_NAME: ${{ secrets.NEON_DB }}
-
        run: |
          mkdir -p ~/.dbt
-         cat <<EOF > ~/.dbt/profiles.yml
+         cat << 'EOF' > ~/.dbt/profiles.yml
          portfolio_pulse_dbt:
-         target: dev
-         outputs:
-           dev:
-             type: postgres
-             host: $DB_HOST
-             user: $DB_USER
-             pass: $DB_PASSWORD
-             port: 5432
-             dbname: $DB_NAME
-             schema: marts
-             sslmode: require
-             threads: 4
+           target: dev
+           outputs:
+             dev:
+               type: postgres
+               host: ${{ env.DB_HOST }}
+               user: ${{ env.DB_USER }}
+               password: ${{ env.DB_PASSWORD }}
+               port: 5432
+               dbname: ${{ env.DB_NAME }}
+               schema: marts
+               sslmode: require
+               threads: 4
          EOF
 
      - name: Run/debug and test dbt models
