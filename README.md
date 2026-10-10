@@ -81,7 +81,7 @@ The project uses staging, intermediate, and mart models to separate source prepa
 
 Current tracked tickers: `AAPL`, `MSFT`, `AMZN`, `GOOGL`, `JPM`, `JNJ`, `XOM`, and `WMT`.
 <div align="center">
-    <img src="/docs/screenshots/portfolio_pulse_lineage_graph.png" width="800" alt="Portfolio Pulse Lineage graph">
+    <img src="/docs/screenshots/portfolio_pulse_lineage_graph.png" width="1000" alt="Portfolio Pulse Lineage graph">
 </div>
 
 ## Data Standardization and Quality
