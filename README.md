@@ -132,7 +132,7 @@ Exact setup depends on the committed `dbt_project.yml`, package configuration, a
 ## Project Deliverables
 
 1. GitHub repo 
-2. ([Google Drive folder](https://drive.google.com/file/d/1qhYx-EfkAZowrs3brlQP6zmvMHizEZ33/view?usp=drive_link)) consisting of the following:
+2. [Google Drive folder](https://drive.google.com/file/d/1qhYx-EfkAZowrs3brlQP6zmvMHizEZ33/view?usp=drive_link) consisting of the following:
     - ER diagram
     - Design decisions
     - Dashboard screenshots
