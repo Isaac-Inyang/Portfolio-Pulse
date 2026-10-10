@@ -58,10 +58,6 @@ jobs:
          pip install dbt-core dbt-postgres
          dbt deps
 
-     - name: Ingesting yfinance data into Neon
-       run:
-         python yfinance_data_ingest.py --dsn "${DSN}"
-
      - name: create profiles.yml dynamically
        env:
          DB_HOST: ${{ secrets.NEON_HOST }}
