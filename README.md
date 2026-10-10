@@ -1,15 +1,19 @@
 # PortfolioPulse
 ### A Global Investment Analytics Platform | Datafrik Capstone
 
-**PortfolioPulse brings stock transactions, historical market prices, and USD–NGN exchange rates into one analytics workflow to help answer: what is my investment portfolio worth, in USD and Naira, over time?**
+PortfolioPulse is a data engineering and analytics project that brings stock transaction history, historical market prices, and USD–NGN exchange rates into a unified workflow to answer:
+*What is my investment portfolio worth in USD and Nigerian Naira over time?*
 
-It combines Google Sheets trade history, yfinance market prices, and exchange-rate data in Neon PostgreSQL. dbt Core transforms the raw data into analytics-ready models, Metabase presents the results, and GitHub Actions orchestrates configured ingestion and transformation workflows.
+The platform integrates transaction records from Google Sheets, market prices from yfinance, and exchange-rate data into Neon PostgreSQL. Airbyte and custom Python ingestion code handle data collection, dbt Core standardizes and transforms the data into analytics-ready models, GitHub Actions automates configured workflows, and Metabase presents portfolio performance through an interactive dashboard.
+
 
 > **Project note:** This is a capstone analytics project, not investment advice or a live brokerage statement. Identify any simulated transaction data as simulated.
 
 ## Dashboard preview
 
-![PortfolioPulse dashboard](./docs/screenshots/portfolio_pulse_dashboard.png)
+<div align="center">
+    <img src="/docs/screenshots/portfolio_pulse_dashboard.png" width="350" alt="Portfolio Pulse Dashboard">
+</div>
 
 The dashboard currently presents portfolio value in USD and NGN, historical market-value trend, position-level gain/loss, ticker allocation, daily movement, unrealized ROI, and top stock by ROI.
 
@@ -18,31 +22,51 @@ The dashboard currently presents portfolio value in USD and NGN, historical mark
 ```mermaid
 flowchart LR
  A[Google Sheets transactions] --> D[Ingestion]
- B[yfinance prices] --> E[ingestion]
+ B[yfinance prices] --> E[Python Ingestion]
  C[USD-NGN exchange rates] --> D
- D --> F[(Neon PostgreSQL raw data)]
+ D --> F[(Neon PostgreSQL)]
  E --> F
  F --> G[dbt staging]
- G --> H[Intermediate models]
- H --> I[Analytics marts]
+ G -. views .-> F 
+ F -. schema: staging .-> H[Intermediate models]
+ H -. views .-> F
+ F -. schema: intermediate .-> I[Analytics marts]
+ F -. schema: staging .-> I
  I --> J[Metabase dashboard]
  K[GitHub Actions] -. orchestration .-> E
  K -. orchestration .-> G
  L[Airbyte] -. orchestration .-> D
 ```
 
-GitHub Actions and Airbyte are the orchestration/control layer, not a data-storage layer.
+### Architecture overview
 
-## Stack
+1. **Source systems:** Provide transaction records, stock market prices, and exchange-rate data.
+2. **Ingestion:** Airbyte handles configured source integrations, while custom Python code retrieves historical and recent market prices.
+3. **Data storage:** Neon PostgreSQL stores ingested data and supports downstream transformations.
+4. **Transformation:** dbt staging views standardize fields and convert data types. Intermediate models and marts prepare the data for analysis.
+5. **Orchestration:** GitHub Actions runs the configured automation workflow; Airbyte manages its configured data synchronization.
+6. **Visualization:** Metabase connects to the analytics models to display portfolio metrics.
 
-- **Sources:** Google Sheets, yfinance, USD–NGN exchange rates
-- **Ingestion:** Airbyte and yfinance python ingestion code
-- **Warehouse/database:** Neon PostgreSQL
-- **Transformation and testing:** dbt Core
-- **Visualization:** Metabase
-- **Orchestration:** GitHub Actions and Airbyte
+
+## Technology Stack
+
+| Area | Technology |
+|---|---|
+| Transaction source | Google Sheets |
+| Market-price source | yfinance |
+| Exchange-rate source | Configured USD–NGN exchange-rate API |
+| Ingestion | Airbyte and Python |
+| Database | Neon PostgreSQL |
+| Transformation and testing | dbt Core |
+| Workflow automation | GitHub Actions and Airbyte scheduling |
+| Dashboard | Metabase |
+| Local deployment | Docker |
+
+
 
 ## Data model
+
+The project uses staging, intermediate, and mart models to separate source preparation from business logic and dashboard calculations.
 
 | Layer / model | Grain | Purpose |
 |---|---|---|
@@ -57,6 +81,25 @@ GitHub Actions and Airbyte are the orchestration/control layer, not a data-stora
 
 Current tracked tickers: `AAPL`, `MSFT`, `AMZN`, `GOOGL`, `JPM`, `JNJ`, `XOM`, and `WMT`.
 
+<img src="/docs/screenshots/portfolio_pulse_lineage_graph.png" width="350" alt="Portfolio Pulse Lineage graph">
+
+
+## Data Standardization and Quality
+
+The staging layer prepares raw source data before downstream analysis.
+For stock transactions, the staging model applies:
+
+- **Whitespace removal:** TRIM() standardizes text fields.
+- **Ticker normalization:** UPPER() converts ticker symbols to uppercase.
+- **Transaction-type normalization:** INITCAP() standardizes capitalization.
+- **Data type conversion:** trade dates are converted to DATE; share quantities, transaction prices, and FX rates are cast to fixed-precision NUMERIC types.
+- **Column standardization:** source fields are renamed to consistent analytical names.
+- **Transaction filtering:** the model retains records classified as buys or sells.
+
+The project also defines dbt schema tests for selected non-null and uniqueness expectations across staging and mart models.
+
+See [data-quality documentation](/docs/data_quality.md) for the implemented transformations, configured tests, limitations, and additional validation checks.
+
 ## Metric definitions
 
 - **Current market value (USD):** Active shares multiplied by the selected latest market price, summed across positions.
@@ -68,31 +111,34 @@ Current tracked tickers: `AAPL`, `MSFT`, `AMZN`, `GOOGL`, `JPM`, `JNJ`, `XOM`, a
 - **Allocation:** Number of shares per individual stock bought
 
 
+## Running the Project
 
-## Quality and validation
-
-The dbt schema tests cover key non-null and uniqueness expectations. Before assessment, add or verify:
-- unique `(ticker, price_date)` price records;
-- accepted transaction types (`Buy`, `Sell`);
-- positive share quantities, stock prices, and FX rates;
-- one row per date in portfolio history and one row per ticker in position P/L;
-- reconciliation of active shares to buys minus sells;
-- correct FX effective-date selection;
-- ROI and market-value calculations against hand-checked examples.
-
-See ![data-quality documentation](/docs/data_quality.md)
-
-## Run locally
-
-Install the project's dependencies, configure a local dbt profile for Neon, then run:
+Prerequisites include Python and its project dependencies, access to the configured Neon PostgreSQL database, dbt Core, and the required source credentials.
+After configuring the local dbt profile and project [dependencies](/docs/dependencies.md), run:
 
 ```bash
 dbt debug
 dbt deps
 dbt build
 ```
+- `dbt debug` checks the dbt connection and configuration
+- `dbt deps` installs packages declared by the project
+- `dbt build` builds selected project resources and executes thier applicable tests.
+
 
 Exact setup depends on the committed `dbt_project.yml`, package configuration, and workflow. Never commit passwords, API keys, private service-account files, or `profiles.yml`.
+
+
+## Project Deliverables
+
+1. GitHub repo 
+2. ([Google Drive folder](https://drive.google.com/file/d/1qhYx-EfkAZowrs3brlQP6zmvMHizEZ33/view?usp=drive_link)) consisting of the following:
+    - ER diagram
+    - Design decisions
+    - Dashboard screenshots
+3. A 3-5mins short video  explaining the project uploaded to drive
+4. A read only credential for the database.
+
 
 ## Limitations
 
