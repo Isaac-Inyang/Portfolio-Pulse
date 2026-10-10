@@ -9,7 +9,7 @@ It combines Google Sheets trade history, yfinance market prices, and exchange-ra
 
 ## Dashboard preview
 
-![PortfolioPulse dashboard](docs/screenshots/portfolio-dashboard.png)
+![PortfolioPulse dashboard](./docs/screenshots/portfolio_pulse_dashboard.png)
 
 The dashboard currently presents portfolio value in USD and NGN, historical market-value trend, position-level gain/loss, ticker allocation, daily movement, unrealized ROI, and top stock by ROI.
 
@@ -31,16 +31,16 @@ flowchart LR
  L[Airbyte] -. orchestration .-> D
 ```
 
-GitHub Actions is the orchestration/control layer, not a data-storage layer.
+GitHub Actions and Airbyte are the orchestration/control layer, not a data-storage layer.
 
 ## Stack
 
 - **Sources:** Google Sheets, yfinance, USD–NGN exchange rates
-- **Ingestion:** Airbyte and supporting ingestion code
+- **Ingestion:** Airbyte and yfinance python ingestion code
 - **Warehouse/database:** Neon PostgreSQL
 - **Transformation and testing:** dbt Core
 - **Visualization:** Metabase
-- **Orchestration:** GitHub Actions
+- **Orchestration:** GitHub Actions and Airbyte
 
 ## Data model
 
@@ -67,7 +67,7 @@ Current tracked tickers: `AAPL`, `MSFT`, `AMZN`, `GOOGL`, `JPM`, `JNJ`, `XOM`, a
 - **Net cash invested:** Total buy costs minus sale proceeds. This is a cash-flow metric, not the cost basis of shares still held.
 - **Allocation:** Number of shares per individual stock bought
 
-Document the cost-basis method used by the model (for example, weighted-average cost). Do not label weighted-average cost as FIFO. If ROI excludes realized gains/losses, label the dashboard KPI **Unrealized ROI**, not simply ROI. Sales proceeds are not the same as realized profit.
+
 
 ## Quality and validation
 
@@ -80,11 +80,11 @@ The dbt schema tests cover key non-null and uniqueness expectations. Before asse
 - correct FX effective-date selection;
 - ROI and market-value calculations against hand-checked examples.
 
-See `docs/data-quality.md` and `docs/metric-definitions.md`.
+See ![data-quality documentation](/docs/data_quality.md)
 
 ## Run locally
 
-Install the project's pinned dependencies, configure a local dbt profile for Neon, then run:
+Install the project's dependencies, configure a local dbt profile for Neon, then run:
 
 ```bash
 dbt debug
@@ -92,7 +92,7 @@ dbt deps
 dbt build
 ```
 
-Exact setup depends on the committed `dbt_project.yml`, package configuration, and workflow. Never commit passwords, API keys, private service-account files, `.env`, or `profiles.yml`.
+Exact setup depends on the committed `dbt_project.yml`, package configuration, and workflow. Never commit passwords, API keys, private service-account files, or `profiles.yml`.
 
 ## Limitations
 
