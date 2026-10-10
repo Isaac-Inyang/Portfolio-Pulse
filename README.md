@@ -12,7 +12,7 @@ The platform integrates transaction records from Google Sheets, market prices fr
 ## Dashboard preview
 
 <div align="center">
-    <img src="/docs/screenshots/portfolio_pulse_dashboard.png" width="350" alt="Portfolio Pulse Dashboard">
+    <img src="/docs/screenshots/portfolio_pulse_dashboard.png" width="1000" alt="Portfolio Pulse Dashboard">
 </div>
 
 The dashboard currently presents portfolio value in USD and NGN, historical market-value trend, position-level gain/loss, ticker allocation, daily movement, unrealized ROI, and top stock by ROI.
@@ -80,9 +80,9 @@ The project uses staging, intermediate, and mart models to separate source prepa
 | `mart_current_portfolio_value` | One portfolio-level row | Current USD and NGN value |
 
 Current tracked tickers: `AAPL`, `MSFT`, `AMZN`, `GOOGL`, `JPM`, `JNJ`, `XOM`, and `WMT`.
-
-<img src="/docs/screenshots/portfolio_pulse_lineage_graph.png" width="350" alt="Portfolio Pulse Lineage graph">
-
+<div align="center">
+    <img src="/docs/screenshots/portfolio_pulse_lineage_graph.png" width="800" alt="Portfolio Pulse Lineage graph">
+</div>
 
 ## Data Standardization and Quality
 
