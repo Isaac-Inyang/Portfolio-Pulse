@@ -38,6 +38,40 @@ flowchart LR
  L[Airbyte] -. orchestration .-> D
 ```
 
+```mermaid
+flowchart LR
+    %% Data Sources
+    A[Google Sheets transactions] --> D[Airbyte Ingestion]
+    C[USD-NGN exchange rates] --> D
+    B[yfinance prices] --> E[Python Ingestion]
+
+    %% Storage
+    D --> F[(Neon PostgreSQL)]
+    E --> F
+
+    %% Orchestration Paths
+    L[Airbyte Cloud/OSS] -. Orchestration .-> D
+    K[GitHub Actions] -. Orchestration .-> E
+    K -. Orchestration .-> dbt
+
+    %% The Integrated dbt Project Container
+    subgraph dbt [dbt Project Layers]
+        direction LR
+        F --> G[Staging]
+        G --> H[Intermediate Models]
+        H --> I[Analytics Marts]
+    end
+
+    %% Consumption
+    I --> J[Metabase Dashboard]
+
+    %% Visual Styling
+    style dbt fill:#fffcf9,stroke:#ff6b6b,stroke-width:2px,stroke-dasharray: 5 5
+    style F fill:#e3faf2,stroke:#0ca678,stroke-width:2px
+    style J fill:#e8f4fd,stroke:#1c7ed6,stroke-width:2px
+```
+
+
 ### Architecture overview
 
 1. **Source systems:** Provide transaction records, stock market prices, and exchange-rate data.
@@ -162,3 +196,4 @@ Exact setup depends on the committed `dbt_project.yml`, package configuration, a
 - LinkedIn: [Isaac Uko Inyang](https://www.linkedin.com/in/isaacukoinyang/)
 
 *Built as a Datafrik capstone project.*
+
