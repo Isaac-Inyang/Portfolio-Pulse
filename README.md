@@ -18,15 +18,17 @@ The dashboard currently presents portfolio value in USD and NGN, historical mark
 ```mermaid
 flowchart LR
  A[Google Sheets transactions] --> D[Ingestion]
- B[yfinance prices] --> D
+ B[yfinance prices] --> E[ingestion]
  C[USD-NGN exchange rates] --> D
- D --> E[(Neon PostgreSQL raw data)]
- E --> F[dbt staging]
- F --> G[Intermediate models]
- G --> H[Analytics marts]
- H --> I[Metabase dashboard]
- J[GitHub Actions] -. orchestration .-> D
- J -. orchestration .-> F
+ D --> F[(Neon PostgreSQL raw data)]
+ E --> F
+ F --> G[dbt staging]
+ G --> H[Intermediate models]
+ H --> I[Analytics marts]
+ I --> J[Metabase dashboard]
+ K[GitHub Actions] -. orchestration .-> E
+ K -. orchestration .-> G
+ L[Airbyte] -. orchestration .-> D
 ```
 
 GitHub Actions is the orchestration/control layer, not a data-storage layer.
