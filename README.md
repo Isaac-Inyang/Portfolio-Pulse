@@ -27,11 +27,11 @@ flowchart LR
  D --> F[(Neon PostgreSQL)]
  E --> F
  F <--> M
- M --> G
- G -. views .-> M 
- M -. schema: staging .-> H[Intermediate models]
- H -. views .-> M
- M -. schema: intermediate/staging .-> I[Analytics marts]
+ M --> G[staging]
+ G --> H[Intermediate models]
+ M --> H
+ H --> I[Analytics marts] 
+ M --> I
  I --> J[Metabase dashboard]
  K[GitHub Actions] -. orchestration .-> E
  K -. orchestration .-> M[dbt transformation]
