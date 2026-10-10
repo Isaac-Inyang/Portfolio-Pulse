@@ -100,6 +100,13 @@ Exact setup depends on the committed `dbt_project.yml`, package configuration, a
 - Historical valuation depends on date alignment between trades, market prices, and FX rates.
 - Current value, unrealized P/L, realized P/L, and net cash invested are distinct metrics.
 - Dashboard values should not be interpreted as financial advice.
+- github action lags, automations are delayed. A faster tool is recommended.
+
+
+## Recommendations & Future Roadmap 
+- **Dynamic Scraping Pipeline:** Modify the Python execution code to dynamically query the live staging layer for active tickers (SELECT DISTINCT ticker) rather than using a hardcoded array string. This will allow the pipeline to automatically capture, scale, and fetch historical market data for any new stock added to the Excel transaction sheets. 
+- **Realized Gains Ledger:** Construct a dedicated analytical model to isolate and calculate the exact cash profits locked in from the 20 historical sales executed providing visibility into cash generation alongside active market exposure. 
+- **Currency Shielding Index:** Create a custom metrics component tracking the financial benefit of holding foreign equities as a hedge against the severe depreciation of the local Naira fiat currency over time. 
 
 ## Author
 
