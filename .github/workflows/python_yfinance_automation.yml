@@ -38,3 +38,49 @@ jobs:
        run: |
          MODE="${{ github.event.inputs.mode || 'daily' }}"
          python yfinance_data_ingest.py --dsn "${DSN}" --mode "${MODE}"
+
+  dbt-setup:
+    runs-on: ubuntu-latest
+    needs: yfinance_ingestion
+    defaults:
+      run:
+        working-directory: ./portfolio_pulse_dbt  # specifying the working directory
+    steps:
+     - name: Install dbt and dependencies
+       run: |
+         pip install dbt-core dbt-postgres
+         dbt deps
+
+     - name: Ingesting yfinance data into Neon
+       run:
+         python yfinance_data_ingest.py --dsn "${DSN}"
+
+     - name: create profiles.yml dynamically
+       env:
+         DB_HOST: ${{ secrets.NEON_HOST }}
+         DB_USER: ${{ secrets.NEON_USER }}
+         DB_PASSWORD: ${{ secrets.NEON_PASSWORD }}
+         DB_NAME: ${{ secrets.NEON_DB }}
+
+       run: |
+         mkdir -p ~/.dbt
+         cat <<EOF > ~/.dbt/profiles.yml
+         naijashop_dbt:
+         target: dev
+         outputs:
+           dev:
+             type: postgres
+             host: $DB_HOST
+             user: $DB_USER
+             pass: $DB_PASSWORD
+             port: 5432
+             dbname: $DB_NAME
+             schema: marts
+             sslmode: require
+             threads: 4
+         EOF
+
+     - name: Run/debug and test dbt models
+       run: |
+         dbt debug  # test connections
+         dbt build  # runs after connection is established
