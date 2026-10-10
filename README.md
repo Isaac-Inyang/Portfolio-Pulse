@@ -26,15 +26,12 @@ flowchart LR
  C[USD-NGN exchange rates] --> D
  D --> F[(Neon PostgreSQL)]
  E --> F
- F --> G[staging]
+ F <--> M
  M --> G
- G -. views .-> F 
- F -. schema: staging .-> H[Intermediate models]
- M --> H
- H -. views .-> F
- F -. schema: intermediate .-> I[Analytics marts]
- M --> I
- F -. schema: staging .-> I
+ G -. views .-> M 
+ M -. schema: staging .-> H[Intermediate models]
+ H -. views .-> M
+ M -. schema: intermediate/staging .-> I[Analytics marts]
  I --> J[Metabase dashboard]
  K[GitHub Actions] -. orchestration .-> E
  K -. orchestration .-> M[dbt transformation]
