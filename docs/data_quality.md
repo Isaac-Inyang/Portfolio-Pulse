@@ -1,14 +1,14 @@
 #  Data Quality & Pipeline Testing Documentation
 
-Data integrity is the foundational core of the **Portfolio Pulse** platform. Because this system drives high-stakes financial visualizations (such as net worth calculations and investment yields), the data transformation pipeline incorporates automated quality gates. 
+Data integrity is the foundational core of the **Portfolio Pulse** pipeline. Because this system drives high-stakes financial visualizations (such as net worth calculations and investment yields), the data transformation pipeline incorporates automated quality gates. 
 
-Using **dbt Core**, tests are compiled and executed directly against our cloud PostgreSQL instance to trap data anomalies before they can distort the frontend Metabase dashboard metrics.
+Using **dbt Core**, tests are compiled and executed directly against the cloud PostgreSQL instance to trap data anomalies before they can distort the frontend Metabase dashboard metrics.
 
 ---
 
 ## Test Suite Architecture
 
-Our data testing strategy operates at two primary checkpoints in the ELT lifecycle:
+The data testing strategy operates at two primary checkpoints in the ETL lifecycle:
 1. **The Staging Layer Gate:** Validates raw inbound rows immediately after extraction from Google Sheets and APIs.
 2. **The Analytics Marts Gate:** Hardens the aggregated calculations, date alignments, and currency structures before dashboard exposure.
 
@@ -20,7 +20,7 @@ Our data testing strategy operates at two primary checkpoints in the ELT lifecyc
 
 ## Configured Tests Breakdown (`schema.yml`)
 
-The following structural mapping defines the automated testing rules deployed across our core analytical tables:
+The following structural mapping defines the automated testing rules deployed across the core analytical models:
 
 ### A. Daily Performance Snapping (`mart_daily_portfolio_delta`)
 *Tracks day-over-day total valuation movements for Metabase KPI trend widgets.*
@@ -59,9 +59,9 @@ During daily automated production cycles, the test runner is embedded straight i
 
 ---
 
-## Data Validation Metrics Captured
+## Data Validation Metrics
 
-By maintaining this defensive testing structure, our platform successfully isolates and handles extreme edge cases natively in the data warehouse layer:
+By maintaining this defensive testing structure, the pipeline successfully isolates and handles extreme edge cases natively in the data warehouse layer:
 *   **Zero Arithmetic Inversions:** The tests verify that all share volume tallies successfully resolve to non-null numeric properties.
 *   **Precision Rounding Guardrails:** All calculations are strictly audited using `ROUND(..., 2)` rules to bypass standard system floating-point decimal anomalies.
 *  **Data Cleaning Guardrails:** All import from raw to staging model follows a data cleaning framework which includes:
