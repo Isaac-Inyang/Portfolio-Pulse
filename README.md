@@ -54,7 +54,7 @@ flowchart LR
 |---|---|
 | Transaction source | Google Sheets |
 | Market-price source | yfinance |
-| Exchange-rate source | Configured USD–NGN exchange-rate API |
+| Exchange-rate source | USD–NGN exchange-rate API |
 | Ingestion | Airbyte and Python |
 | Database | Neon PostgreSQL |
 | Transformation and testing | dbt Core |
