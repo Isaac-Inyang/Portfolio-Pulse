@@ -21,25 +21,6 @@ The dashboard currently presents portfolio value in USD and NGN, historical mark
 
 ```mermaid
 flowchart LR
- A[Google Sheets transactions] --> D[Ingestion]
- B[yfinance prices] --> E[Python Ingestion]
- C[USD-NGN exchange rates] --> D
- D --> F[(Neon PostgreSQL)]
- E --> F
- F <--> M
- M --> G[staging]
- G --> H[Intermediate models]
- M --> H
- H --> I[Analytics marts] 
- M --> I
- I --> J[Metabase dashboard]
- K[GitHub Actions] -. orchestration .-> E
- K -. orchestration .-> M[dbt transformation]
- L[Airbyte] -. orchestration .-> D
-```
-
-```mermaid
-flowchart LR
     %% Data Sources
     A[Google Sheets transactions] --> D[Airbyte Ingestion]
     C[USD-NGN exchange rates] --> D
