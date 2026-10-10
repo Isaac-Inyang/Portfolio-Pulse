@@ -13,7 +13,7 @@ on:
           - daily
 
   schedule:
-    - cron: "00 1 * * 1-6" # Runs at 1:00 AM UTC (2:00 AM Nigerian Time WAT) from Monday to Saturday
+    - cron: "00 20 * * 1-5" # Runs at 20:00 AM UTC (9:00 pm Nigerian Time WAT) from Monday to friday
 
 jobs:
   yfinance_ingestion:
