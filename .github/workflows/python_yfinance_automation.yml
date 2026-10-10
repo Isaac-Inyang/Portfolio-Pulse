@@ -13,14 +13,13 @@ on:
           - daily
 
   schedule:
-    # - cron: "0 20 * * 1-5"
-    - cron: "00 1 * * 1-6"
+    - cron: "00 1 * * 1-6" # Runs at 1:00 AM UTC (2:00 AM Nigerian Time WAT) from Monday to Saturday
 
 jobs:
   yfinance_ingestion:
     runs-on: ubuntu-latest
     env:
-       DSN: ${{ secrets.NEON_DSN}}
+       DSN: ${{ secrets.NEON_DSN }}
 
     steps:
      - name: Checkout repository
@@ -31,12 +30,11 @@ jobs:
        with:
           python-version: '3.11'
 
-     - name: Install dbt and dependencies
+     - name: Install dependencies
        run: |
-         pip install  psycopg2-binary yfinance pandas
+         pip install psycopg2-binary yfinance pandas
 
      - name: Ingesting yfinance data into Neon
        run: |
-         MODE="${{ inputs.mode || 'daily' }}"
+         MODE="${{ github.event.inputs.mode || 'daily' }}"
          python yfinance_data_ingest.py --dsn "${DSN}" --mode "${MODE}"
-
